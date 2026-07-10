@@ -140,4 +140,3 @@ if df is not None:
                         st.session_state.pregunta_actual += 1
                         st.session_state.respondido = False
                         st.rerun()
-
