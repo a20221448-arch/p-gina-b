@@ -8,7 +8,7 @@ st.set_page_config(page_title="Trivia SOMP", page_icon="🩺", layout="centered"
 st.title("🩺💜 Trivia: ¿Mito o realidad sobre el SOMP?")
 st.subheader("Pon a prueba tus conocimientos y combate la desinformación.")
 
-# 1. Cargar la base de datos automáticamente desde el repositorio
+# Cargar la base de datos automáticamente desde el repositorio
 @st.cache_data
 def cargar_datos():
     try:
@@ -16,7 +16,7 @@ def cargar_datos():
         df = pd.read_excel("Pensamiento - Base de datos.xlsx")
         return df
     except FileNotFoundError:
-        st.error("❌ No se encontró el archivo 'Pensamiento - Base de datos.xlsx' en el repositorio de GitHub.")
+        st.error("❌ No se encontró el archivo 'Pensamiento - Base de datos.xlsx' en el repositorio de GitHub. Revisa que el nombre coincida exactamente.")
         return None
     except Exception as e:
         st.error(f"❌ Error al leer el archivo Excel: {e}")
@@ -34,7 +34,7 @@ if df is not None:
             falta_columna = True
     
     if not falta_columna:
-        # 2. Inicializar variables del estado de la sesión (Session State)
+        # Inicializar variables del estado de la sesión
         if "juego_iniciado" not in st.session_state:
             st.session_state.juego_iniciado = False
             st.session_state.preguntas = None
@@ -43,29 +43,31 @@ if df is not None:
             st.session_state.respondido = False
             st.session_state.respuesta_correcta = False
 
-        # --- PANTALLA DE CONFIGURACIÓN / INICIO ---
+        # --- PANTALLA DE CONFIGURACIÓN ---
         if not st.session_state.juego_iniciado:
             st.markdown("### 📚 Configuración de la partida")
             
             orden_niveles = ["Fácil", "Medio", "Difícil"]
             niveles_disponibles = [n for n in orden_niveles if n in df["nivel"].unique()]
             
-            nivel_elegido = st.selectbox("Elige un nivel:", niveles_disponibles)
-            
-            if st.button("🚀 Comenzar Juego", use_container_width=True):
-                preguntas_nivel = df[df["nivel"] == nivel_elegido]
+            if not niveles_disponibles:
+                st.error("❌ No se encontraron los niveles 'Fácil', 'Medio' o 'Difícil' en la columna 'nivel' de tu Excel.")
+            else:
+                nivel_elegido = st.selectbox("Elige un nivel:", niveles_disponibles)
                 
-                if len(preguntas_nivel) == 0:
-                    st.error("❌ No existen preguntas para ese nivel.")
-                else:
-                    cantidad_preguntas = min(10, len(preguntas_nivel))
-                    # Guardamos las preguntas seleccionadas aleatoriamente
-                    st.session_state.preguntas = preguntas_nivel.sample(n=cantidad_preguntas).reset_index(drop=True)
-                    st.session_state.juego_iniciado = True
-                    st.session_state.pregunta_actual = 0
-                    st.session_state.puntaje = 0
-                    st.session_state.respondido = False
-                    st.rerun()
+                if st.button("🚀 Comenzar Juego", use_container_width=True):
+                    preguntas_nivel = df[df["nivel"] == nivel_elegido]
+                    
+                    if len(preguntas_nivel) == 0:
+                        st.error("❌ No existen preguntas para ese nivel.")
+                    else:
+                        cantidad_preguntas = min(10, len(preguntas_nivel))
+                        st.session_state.preguntas = preguntas_nivel.sample(n=cantidad_preguntas).reset_index(drop=True)
+                        st.session_state.juego_iniciado = True
+                        st.session_state.pregunta_actual = 0
+                        st.session_state.puntaje = 0
+                        st.session_state.respondido = False
+                        st.rerun()
 
         # --- PANTALLA DE JUEGO ---
         else:
@@ -100,7 +102,6 @@ if df is not None:
                     st.rerun()
             
             else:
-                # Mostrar pregunta actual
                 fila = preguntas.iloc[idx]
                 
                 st.markdown(f"**📖 Pregunta {idx + 1} de {total_preguntas}**")
@@ -108,7 +109,6 @@ if df is not None:
                 
                 st.info(f"**🔷 MITO:**\n\n{fila['mito']}")
                 
-                # Opciones de respuesta
                 opciones = {
                     f"A) {fila['A']}": "A",
                     f"B) {fila['B']}": "B",
@@ -116,12 +116,10 @@ if df is not None:
                     f"D) {fila['D']}": "D"
                 }
                 
-                # Formulario para evitar que recargue la página al hacer click en un radio button
                 with st.form(key=f"form_pregunta_{idx}"):
                     seleccion = st.radio("Selecciona tu respuesta:", list(opciones.keys()))
                     enviar = st.form_submit_button("Enviar Respuesta", use_container_width=True)
                 
-                # Lógica al presionar enviar
                 if enviar and not st.session_state.respondido:
                     st.session_state.respondido = True
                     letra_seleccionada = opciones[seleccion]
@@ -133,7 +131,6 @@ if df is not None:
                     else:
                         st.session_state.respuesta_correcta = False
                 
-                # Si ya se respondió, mostrar la retroalimentación y el botón de continuar
                 if st.session_state.respondido:
                     correcta = str(fila["respuesta"]).strip().upper()
                     if st.session_state.respuesta_correcta:
