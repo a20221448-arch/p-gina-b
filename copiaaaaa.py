@@ -1,6 +1,5 @@
-import streamlit as pd
-import pandas as pd
 import streamlit as st
+import pandas as pd
 
 # Configuración de la página
 st.set_page_config(page_title="Trivia SOMP", page_icon="🩺", layout="centered")
